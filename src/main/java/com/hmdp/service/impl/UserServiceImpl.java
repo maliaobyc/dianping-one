@@ -119,9 +119,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String key = USER_SIGN_KEY + userId + keySuffix;
         // 4.获取今天是本月的第几天
         int dayOfMonth = now.getDayOfMonth();
-        // 5.写入Redis SETBIT key offset 1
+        // 5.查询今天是否已经签到 GETBIT key offset
+        Boolean signed = stringRedisTemplate.opsForValue().getBit(key, dayOfMonth - 1);
+        if (Boolean.TRUE.equals(signed)) {
+            // 已签到，返回1
+            return Result.ok(1);
+        }
+        // 6.未签到，写入Redis SETBIT key offset 1，返回0
         stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
-        return Result.ok();
+        return Result.ok(0);
     }
 
     @Override
